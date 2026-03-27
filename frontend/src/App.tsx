@@ -33,6 +33,9 @@ const styles = `
     border-radius: 24px;
     overflow: hidden;
     box-shadow: 0 24px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
   }
 
   .card-header {
@@ -41,6 +44,7 @@ const styles = `
     display: flex;
     align-items: center;
     gap: 16px;
+    flex-shrink: 0;
   }
 
   .tg-icon {
@@ -108,11 +112,43 @@ const styles = `
     font-weight: 700;
   }
 
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: rgba(0,0,0,0.2);
+    flex-shrink: 0;
+  }
+
+  .tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 16px;
+    color: rgba(255,255,255,0.5);
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+  }
+
+  .tab-btn:hover { color: rgba(255,255,255,0.8); }
+  
+  .tab-btn.active {
+    color: #29B6F6;
+    border-bottom: 2px solid #29B6F6;
+    background: rgba(41,182,246,0.05);
+  }
+
   .card-body {
     padding: 32px;
     display: flex;
     flex-direction: column;
     gap: 24px;
+    overflow-y: auto;
   }
 
   /* Drop zone */
@@ -205,7 +241,7 @@ const styles = `
   }
   .file-pill-remove:hover { color: #fff; background: #ef5350; }
 
-  /* Message input */
+  /* Inputs */
   .field-label {
     font-size: 12px;
     font-weight: 600;
@@ -237,7 +273,12 @@ const styles = `
     box-shadow: 0 0 0 4px rgba(41,182,246,0.1);
   }
 
-  /* Send button */
+  /* Buttons */
+  .btn-group {
+    display: flex;
+    gap: 12px;
+  }
+
   .send-btn {
     width: 100%;
     background: linear-gradient(135deg, #29B6F6 0%, #0277BD 100%);
@@ -270,6 +311,14 @@ const styles = `
     cursor: not-allowed;
   }
 
+  .abort-btn {
+    background: linear-gradient(135deg, #ef5350 0%, #c62828 100%);
+    box-shadow: 0 4px 15px rgba(239,83,80,0.3);
+  }
+  .abort-btn:hover:not(:disabled) {
+    box-shadow: 0 8px 25px rgba(239,83,80,0.5);
+  }
+
   /* Progress bar */
   .progress-wrap {
     background: rgba(0,0,0,0.3);
@@ -285,6 +334,78 @@ const styles = `
     border-radius: 8px;
     transition: width 0.3s ease;
     box-shadow: 0 0 10px rgba(41,182,246,0.5);
+  }
+
+  /* History Styles */
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .history-item {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: background 0.2s;
+  }
+
+  .history-item:hover {
+    background: rgba(0,0,0,0.4);
+    border-color: rgba(255,255,255,0.1);
+  }
+
+  .history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .history-date {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+  }
+
+  .history-stats {
+    display: flex;
+    gap: 8px;
+  }
+
+  .stat-pill {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .stat-pill.success { background: rgba(76,175,80,0.1); color: #81C784; border: 1px solid rgba(76,175,80,0.2); }
+  .stat-pill.error { background: rgba(239,83,80,0.1); color: #E57373; border: 1px solid rgba(239,83,80,0.2); }
+
+  .history-message {
+    font-size: 14px;
+    color: #E0E8F0;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  .history-file {
+    font-size: 12px;
+    color: #29B6F6;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(41,182,246,0.05);
+    padding: 6px 10px;
+    border-radius: 6px;
+    width: fit-content;
   }
 
   /* Toast */
@@ -310,6 +431,7 @@ const styles = `
 
   .toast.success { border-bottom: 3px solid #4CAF50; }
   .toast.error { border-bottom: 3px solid #ef5350; }
+  .toast.warning { border-bottom: 3px solid #FFCA28; color: #FFE082; }
 
   @keyframes toastIn {
     from { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.9); }
@@ -328,8 +450,18 @@ const styles = `
 `;
 
 type ToastData = {
-  type: "success" | "error";
+  type: "success" | "error" | "warning";
   text: string;
+};
+
+type BroadcastRecord = {
+  id: number;
+  message: string;
+  file_path: string | null;
+  success_count: number;
+  fail_count: number;
+  total_targets: number;
+  sent_at: string;
 };
 
 function getFileIcon(name: string): string {
@@ -348,28 +480,49 @@ function formatBytes(bytes: number): string {
   return (bytes / (1024 * 1024)).toFixed(2) + " MB";
 }
 
+function formatDate(dateString: string) {
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short", day: "numeric", hour: "numeric", minute: "2-digit"
+  }).format(date);
+}
+
 export default function App() {
+  const [view, setView] = useState<"broadcast" | "history">("broadcast");
+  const [historyData, setHistoryData] = useState<BroadcastRecord[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
+
   const [file, setFile] = useState<File | null>(null);
   const [message, setMessage] = useState<string>("");
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
   const [sending, setSending] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
   const [toast, setToast] = useState<ToastData | null>(null);
-  
-  // ✅ NEW: State to hold the real contact count
+  const [apiKey, setApiKey] = useState<string>(localStorage.getItem("tg_admin_key") || "");
   const [contactCount, setContactCount] = useState<number>(0);
   const [isLoadingContacts, setIsLoadingContacts] = useState<boolean>(true);
+  
+  const [isAborting, setIsAborting] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const activeBroadcastId = useRef<string | null>(null);
 
-  // ✅ NEW: Fetch the real contact count when the component loads
   useEffect(() => {
     const fetchUserCount = async () => {
+      if (!apiKey) {
+        setIsLoadingContacts(false);
+        return;
+      }
       try {
-        const response = await fetch("http://localhost:5000/api/users/count");
+        const response = await fetch("http://localhost:5000/api/users/count", {
+          headers: { "x-api-key": apiKey } 
+        });
         if (response.ok) {
           const data = await response.json();
           setContactCount(data.count);
+        } else {
+          setContactCount(0);
         }
       } catch (error) {
         console.error("Failed to fetch user count", error);
@@ -377,11 +530,30 @@ export default function App() {
         setIsLoadingContacts(false);
       }
     };
-
     fetchUserCount();
-  }, []); // Empty dependency array means this runs once when the page loads
+  }, [apiKey]);
 
-  const showToast = (type: "success" | "error", text: string) => {
+  const handleViewHistory = async () => {
+    setView("history");
+    if (!apiKey) return;
+    
+    setIsLoadingHistory(true);
+    try {
+      const response = await fetch("http://localhost:5000/api/history", {
+        headers: { "x-api-key": apiKey }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setHistoryData(data);
+      }
+    } catch (error) {
+      showToast("error", "❌ Failed to load history.");
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  const showToast = (type: "success" | "error" | "warning", text: string) => {
     setToast({ type, text });
     setTimeout(() => setToast(null), 3500);
   };
@@ -404,9 +576,33 @@ export default function App() {
 
   const onDragLeave = () => setIsDragOver(false);
 
+  const handleAbort = async () => {
+    if (!apiKey || !activeBroadcastId.current) return;
+    setIsAborting(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/cancel", {
+        method: "POST",
+        headers: { 
+          "x-api-key": apiKey,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ broadcastId: activeBroadcastId.current })
+      });
+      if (res.ok) {
+        showToast("warning", "🛑 Abort signal sent! Stopping broadcast...");
+      } else {
+        showToast("error", "❌ Failed to send abort signal.");
+        setIsAborting(false);
+      }
+    } catch (e) {
+      showToast("error", "❌ Server error while aborting.");
+      setIsAborting(false);
+    }
+  };
+
   const handleSend = async () => {
-    if (!file) {
-      showToast("error", "⚠️  Please select a file first");
+    if (!file && !message.trim()) {
+      showToast("error", "⚠️  Please select a file or type a message first.");
       return;
     }
     if (contactCount === 0) {
@@ -415,10 +611,14 @@ export default function App() {
     }
 
     setSending(true);
+    setIsAborting(false);
     setProgress(10);
 
+    const currentBroadcastId = Date.now().toString();
+    activeBroadcastId.current = currentBroadcastId;
+
     const formData = new FormData();
-    formData.append("file", file);
+    if (file) formData.append("file", file);
     formData.append("message", message);
 
     const tick = setInterval(() => {
@@ -426,8 +626,10 @@ export default function App() {
     }, 300);
 
     try {
-      const res = await fetch("http://localhost:5000/api/send-file", {
+      // ✅ FIX: Attach the ID to the URL so Multer doesn't lose it!
+      const res = await fetch(`http://localhost:5000/api/send-file?broadcastId=${currentBroadcastId}`, {
         method: "POST",
+        headers: { "x-api-key": apiKey },
         body: formData,
       });
       
@@ -435,11 +637,16 @@ export default function App() {
       setProgress(100);
       
       if (res.ok) {
-        showToast("success", `✅ Broadcast successful to ${contactCount} users!`);
-        setFile(null);
-        setMessage("");
+        const data = await res.json();
+        if (data.result.aborted) {
+          showToast("warning", `🛑 Broadcast aborted. Sent to ${data.result.sent} users.`);
+        } else {
+          showToast("success", `✅ Broadcast successful to ${data.result.sent} users!`);
+          setFile(null);
+          setMessage("");
+        }
       } else {
-        showToast("error", "❌ Server error. Check backend logs.");
+        showToast("error", "❌ Server error. Check backend logs or your API key.");
       }
     } catch {
       clearInterval(tick);
@@ -447,8 +654,10 @@ export default function App() {
     } finally {
       setTimeout(() => {
         setSending(false);
+        setIsAborting(false);
         setProgress(0);
-      }, 800);
+        activeBroadcastId.current = null; 
+      }, 1200);
     }
   };
 
@@ -457,7 +666,6 @@ export default function App() {
       <style>{styles}</style>
       <div className="app">
         <div className="card">
-          {/* Header */}
           <div className="card-header">
             <div className="tg-icon">✈️</div>
             <div className="header-text">
@@ -465,7 +673,6 @@ export default function App() {
               <p>Admin Broadcast Control</p>
             </div>
             
-            {/* ✅ NEW: Dynamic Live Status Badge */}
             <div className="status-badge">
               <div className="status-dot"></div>
               <div className="status-text">
@@ -474,91 +681,183 @@ export default function App() {
             </div>
           </div>
 
-          <div className="card-body">
-            {/* File upload */}
-            <div>
-              <div className="field-label">Media Attachment</div>
-              {!file ? (
-                <div
-                  className={`drop-zone${isDragOver ? " drag-over" : ""}`}
-                  onDrop={onDrop}
-                  onDragOver={onDragOver}
-                  onDragLeave={onDragLeave}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                      handleFile(e.target.files?.[0])
-                    }
-                    style={{ display: "none" }}
-                  />
-                  <span className="drop-icon">📁</span>
-                  <div className="drop-label">
-                    Drag and drop file here or <span>browse files</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="file-pill">
-                  <span className="file-pill-icon">{getFileIcon(file.name)}</span>
-                  <div className="file-pill-info">
-                    <div className="file-pill-name">{file.name}</div>
-                    <div className="file-pill-size">{formatBytes(file.size)}</div>
-                  </div>
-                  <button
-                    className="file-pill-remove"
-                    onClick={() => setFile(null)}
-                    title="Remove file"
-                  >
-                    ✕
-                  </button>
-                </div>
-              )}
-            </div>
+          <div className="tabs">
+            <button 
+              className={`tab-btn ${view === "broadcast" ? "active" : ""}`}
+              onClick={() => setView("broadcast")}
+            >
+              New Broadcast
+            </button>
+            <button 
+              className={`tab-btn ${view === "history" ? "active" : ""}`}
+              onClick={handleViewHistory}
+            >
+              History Log
+            </button>
+          </div>
 
-            {/* Message */}
+          <div className="card-body">
+            
             <div>
-              <div className="field-label">Broadcast Caption</div>
-              <textarea
-                placeholder="Write an announcement to send to all users..."
-                value={message}
-                onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
-                  setMessage(e.target.value)
-                }
-                maxLength={1024}
+              <div className="field-label">Admin API Key</div>
+              <input
+                type="password"
+                placeholder="Enter your secret API key..."
+                value={apiKey}
+                onChange={(e) => {
+                  setApiKey(e.target.value);
+                  localStorage.setItem("tg_admin_key", e.target.value);
+                }}
+                style={{ 
+                  width: "100%", padding: "14px 16px", borderRadius: "12px", 
+                  background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.1)", 
+                  color: "#fff", fontFamily: "'Outfit', sans-serif", fontSize: "15px",
+                  outline: "none"
+                }}
               />
             </div>
 
-            {/* Progress */}
-            {sending && (
-              <div className="progress-wrap">
-                <div
-                  className="progress-bar"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
+            {view === "broadcast" && (
+              <>
+                <div>
+                  <div className="field-label">Media Attachment</div>
+                  {!file ? (
+                    <div
+                      className={`drop-zone${isDragOver ? " drag-over" : ""}`}
+                      onDrop={onDrop}
+                      onDragOver={onDragOver}
+                      onDragLeave={onDragLeave}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                          handleFile(e.target.files?.[0])
+                        }
+                        style={{ display: "none" }}
+                      />
+                      <span className="drop-icon">📁</span>
+                      <div className="drop-label">
+                        Drag and drop file here or <span>browse files</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="file-pill">
+                      <span className="file-pill-icon">{getFileIcon(file.name)}</span>
+                      <div className="file-pill-info">
+                        <div className="file-pill-name">{file.name}</div>
+                        <div className="file-pill-size">{formatBytes(file.size)}</div>
+                      </div>
+                      <button
+                        className="file-pill-remove"
+                        onClick={() => setFile(null)}
+                        title="Remove file"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <div className="field-label">Broadcast Caption</div>
+                  <textarea
+                    placeholder="Write an announcement to send to all users..."
+                    value={message}
+                    onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
+                      setMessage(e.target.value)
+                    }
+                    maxLength={1024}
+                  />
+                </div>
+
+                {sending && (
+                  <div className="progress-wrap">
+                    <div className="progress-bar" style={{ width: `${progress}%`, background: isAborting ? "#ef5350" : "" }} />
+                  </div>
+                )}
+
+                <div className="btn-group">
+                  {sending ? (
+                    <>
+                      <button className="send-btn" disabled style={{ flex: 2 }}>
+                        <span className="spinner" /> {isAborting ? "ABORTING..." : "BROADCASTING..."}
+                      </button>
+                      <button 
+                        className="send-btn abort-btn" 
+                        onClick={handleAbort}
+                        disabled={isAborting}
+                        style={{ flex: 1 }}
+                      >
+                        🛑 ABORT
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      className="send-btn"
+                      onClick={handleSend}
+                      disabled={contactCount === 0 || (!file && !message.trim())}
+                    >
+                      ✈️ INITIATE BROADCAST
+                    </button>
+                  )}
+                </div>
+              </>
             )}
 
-            {/* Send */}
-            <button
-              className="send-btn"
-              onClick={handleSend}
-              disabled={sending || !file || contactCount === 0}
-            >
-              {sending ? (
-                <>
-                  <span className="spinner" /> BROADCASTING...
-                </>
-              ) : (
-                <>✈️ INITIATE BROADCAST</>
-              )}
-            </button>
+            {view === "history" && (
+              <div className="history-list">
+                {!apiKey ? (
+                  <div style={{ textAlign: "center", color: "rgba(255,255,255,0.4)", padding: "40px 0" }}>
+                    🔒 Enter your API key above to view history.
+                  </div>
+                ) : isLoadingHistory ? (
+                  <div style={{ textAlign: "center", padding: "40px 0" }}>
+                    <span className="spinner" />
+                  </div>
+                ) : historyData.length === 0 ? (
+                  <div style={{ textAlign: "center", color: "rgba(255,255,255,0.4)", padding: "40px 0" }}>
+                    No broadcasts found.
+                  </div>
+                ) : (
+                  historyData.map((record) => (
+                    <div key={record.id} className="history-item">
+                      <div className="history-header">
+                        <div className="history-date">🕒 {formatDate(record.sent_at)}</div>
+                        <div className="history-stats">
+                          <div className="stat-pill success">✓ {record.success_count}</div>
+                          {record.fail_count > 0 && (
+                            <div className="stat-pill error">✕ {record.fail_count}</div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="history-message">
+                        {record.message === "[File Only - No Caption]" ? (
+                          <span style={{ fontStyle: "italic", opacity: 0.5 }}>{record.message}</span>
+                        ) : record.message.startsWith("[ABORTED]") ? (
+                          <span style={{ color: "#ef5350", fontWeight: 600 }}>{record.message}</span>
+                        ) : (
+                          record.message
+                        )}
+                      </div>
+
+                      {record.file_path && (
+                        <div className="history-file">
+                          📁 {record.file_path.split(/\\|\//).pop()}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+            
           </div>
         </div>
       </div>
 
-      {/* Toast */}
       {toast && (
         <div className={`toast ${toast.type}`}>
           {toast.text}

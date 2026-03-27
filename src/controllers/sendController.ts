@@ -1,30 +1,34 @@
 import { Request, Response } from "express";
-import { sendToAllUsers } from "../services/senderService";
-import { db } from "../config/db";
+import { sendToAllUsers, cancelBroadcast } from "../services/senderService";
 import path from "path";
 import fs from "fs";
+import { db } from "../config/db";
 
 export const sendFileController = async (req: any, res: Response) => {
   try {
     const { message } = req.body;
+    
+    // ✅ FIX: Read ID from the URL Query string instead of the form body
+    const broadcastId = req.query.broadcastId as string || req.body.broadcastId;
 
-    if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
+    let filePath: string | null = null;
+
+    if (req.file) {
+      filePath = path.resolve(req.file.path);
+      if (!fs.existsSync(filePath)) {
+        console.error(`File missing at path: ${filePath}`);
+        return res.status(500).json({ error: "Server failed to save the file." });
+      }
+    } 
+    else if (!message || message.trim() === "") {
+      return res.status(400).json({ error: "You must provide either a file or a message." });
     }
 
-    // 1. Convert the path to an absolute Windows path
-    const filePath = path.resolve(req.file.path);
-
-    // 2. Safety check: Verify the file actually exists on the hard drive
-    if (!fs.existsSync(filePath)) {
-      console.error(`File missing at path: ${filePath}`);
-      return res.status(500).json({ error: "Server failed to save the file." });
-    }
-
-    const result = await sendToAllUsers(message, filePath);
+    console.log(`🚀 Starting Broadcast ID: ${broadcastId}`);
+    const result = await sendToAllUsers(message, filePath, broadcastId);
 
     res.json({
-      message: "Sending started",
+      message: "Sending finished",
       result,
     });
   } catch (error) {
@@ -42,4 +46,29 @@ export const getUserCount = async (req: Request, res: Response) => {
     console.error("Error fetching user count:", error);
     res.status(500).json({ error: "Failed to fetch user count" });
   }
+};
+
+export const getBroadcastHistory = async (req: Request, res: Response) => {
+  try {
+    const result = await db.query(
+      "SELECT * FROM broadcast_history ORDER BY sent_at DESC LIMIT 50"
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching history:", error);
+    res.status(500).json({ error: "Failed to fetch broadcast history" });
+  }
+};
+
+export const cancelBroadcastController = (req: Request, res: Response) => {
+  const { broadcastId } = req.body;
+  
+  if (broadcastId) {
+    console.log(`🛑 Received Abort Signal for Broadcast ID: ${broadcastId}`);
+    cancelBroadcast(broadcastId);
+  } else {
+    console.log("⚠️ Abort signal received, but NO broadcastId was provided!");
+  }
+  
+  res.json({ message: "Broadcast abort signal received." });
 };
