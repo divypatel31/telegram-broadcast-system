@@ -2,3 +2,8 @@ node_modules/
 dist/
 .env
 *.log
+
+# Uploaded media and documents
+uploads/
+temp/
+*.csv

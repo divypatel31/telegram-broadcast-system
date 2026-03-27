@@ -7,40 +7,48 @@ const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
 console.log("🤖 Telegram bot started...");
 
 // ✅ Handle incoming messages
+// ✅ Handle incoming messages
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id.toString();
+  const text = msg.text?.toLowerCase().trim();
 
-  console.log("📩 User Chat ID:", chatId);
+  console.log(`📩 Message from ${chatId}: ${text}`);
 
   try {
-    // 🔍 Check if user already exists
+    // 🛑 1. Handle Unsubscribe ("/stop")
+    if (text === "/stop") {
+      await db.query("DELETE FROM users WHERE chat_id = $1", [chatId]);
+      await bot.sendMessage(
+        chatId,
+        "🚫 You have been unsubscribed. You will no longer receive files. Send /start to rejoin."
+      );
+      console.log(`🚪 User ${chatId} unsubscribed.`);
+      return; // Stop running the rest of the code
+    }
+
+    // 🔍 2. Check if user already exists
     const result = await db.query(
       "SELECT * FROM users WHERE chat_id = $1",
       [chatId]
     );
 
-    // 🆕 New user → save + welcome
+    // 🆕 3. New user → save + welcome
     if (result.rows.length === 0) {
-      await db.query(
-        "INSERT INTO users (chat_id) VALUES ($1)",
-        [chatId]
-      );
+      await db.query("INSERT INTO users (chat_id) VALUES ($1)", [chatId]);
 
       await bot.sendMessage(
         chatId,
-        "🎉 Welcome! You are now connected. You will receive updates here."
+        "🎉 Welcome! You are now connected. You will receive updates here.\n\n(Type /stop at any time to unsubscribe)"
       );
 
       console.log("✅ New user saved + welcomed");
     } else {
       console.log("ℹ️ Existing user");
     }
-
   } catch (error) {
     console.error("❌ DB error:", error);
   }
 });
-
 // ✅ Send text message
 export const sendMessage = async (chatId: string, text: string) => {
   try {

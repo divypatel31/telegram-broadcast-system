@@ -23,11 +23,23 @@ export const sendToAllUsers = async (message: string, filePath: string) => {
         // ⏳ Delay to avoid Telegram spam block
         await delay(2000);
 
-      } catch (err) {
+      } catch (err: any) {
         failCount++;
-        console.error(`❌ Failed for ${user.chat_id}:`, err);
+        
+        // 🛑 AUTO-CLEANUP: Check if user blocked the bot
+        // Telegram API returns a 403 code or a specific description when blocked
+        const errorMessage = err.response?.body?.description || err.message || "";
+        const errorCode = err.response?.body?.error_code || err.response?.statusCode;
+        
+        if (errorMessage.includes("blocked by the user") || errorCode === 403) {
+           console.log(`🚫 User ${user.chat_id} blocked the bot. Removing from DB...`);
+           await db.query("DELETE FROM users WHERE chat_id = $1", [user.chat_id]);
+           continue; // Move directly to the next user, skipping the retry attempt
+        }
 
-        // 🔁 Retry once (optional but powerful)
+        console.error(`❌ Failed for ${user.chat_id}:`, errorMessage);
+
+        // 🔁 Retry once (optional but powerful) for non-block network errors
         try {
           console.log(`🔁 Retrying for ${user.chat_id}...`);
           await delay(3000);
