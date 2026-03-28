@@ -2,7 +2,6 @@ import { db } from "../config/db";
 import { sendFile, sendMessage } from "./telegramService"; 
 import { delay } from "../utils/delay";
 
-// ✅ Keep a list of cancelled broadcast IDs
 const cancelledBroadcasts = new Set<string>();
 
 export const cancelBroadcast = (broadcastId: string) => {
@@ -11,6 +10,18 @@ export const cancelBroadcast = (broadcastId: string) => {
 
 export const sendToAllUsers = async (message: string, filePath: string | null, broadcastId: string) => {
   try {
+    // ✅ CHECKPOINT 1: Did the admin abort while the file was uploading to your server?
+    if (broadcastId && cancelledBroadcasts.has(broadcastId)) {
+      console.log(`🛑 Broadcast ${broadcastId} aborted BEFORE sending started.`);
+      cancelledBroadcasts.delete(broadcastId); // Clean memory
+      
+      await db.query(
+        `INSERT INTO broadcast_history (message, file_path, success_count, fail_count, total_targets) VALUES ($1, $2, $3, $4, $5)`,
+        [`[ABORTED] ` + (message ? message : "[File Only - No Caption]"), filePath ? filePath : null, 0, 0, 0]
+      );
+      return { success: true, total: 0, sent: 0, failed: 0, aborted: true };
+    }
+
     const result = await db.query("SELECT chat_id FROM users");
     const users = result.rows;
 
@@ -19,7 +30,7 @@ export const sendToAllUsers = async (message: string, filePath: string | null, b
     let wasCancelled = false; 
 
     for (const user of users) {
-      // ✅ Check if THIS specific broadcast was cancelled
+      // ✅ CHECKPOINT 2: Did the admin abort right before this specific user?
       if (broadcastId && cancelledBroadcasts.has(broadcastId)) {
         console.log(`🛑 Broadcast ${broadcastId} aborted by admin.`);
         wasCancelled = true;
@@ -33,6 +44,14 @@ export const sendToAllUsers = async (message: string, filePath: string | null, b
           await sendFile(user.chat_id, filePath, message);
         } else {
           await sendMessage(user.chat_id, message);
+        }
+
+        // ✅ CHECKPOINT 3: Did the admin abort EXACTLY while Telegram was receiving the file?
+        if (broadcastId && cancelledBroadcasts.has(broadcastId)) {
+          console.log(`🛑 Broadcast ${broadcastId} aborted right after sending to ${user.chat_id}.`);
+          successCount++;
+          wasCancelled = true;
+          break; 
         }
 
         successCount++;
@@ -51,6 +70,7 @@ export const sendToAllUsers = async (message: string, filePath: string | null, b
            continue; 
         }
 
+        // ✅ CHECKPOINT 4: Abort check if an error happened
         if (broadcastId && cancelledBroadcasts.has(broadcastId)) {
           wasCancelled = true;
           break; 
@@ -79,7 +99,7 @@ export const sendToAllUsers = async (message: string, filePath: string | null, b
       }
     }
 
-    // ✅ Clean up the memory once it's finished
+    // ✅ Clean up memory once the loop is broken or finished
     if (broadcastId) {
       cancelledBroadcasts.delete(broadcastId);
     }

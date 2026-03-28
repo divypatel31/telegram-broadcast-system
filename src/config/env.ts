@@ -13,3 +13,6 @@ export const DB_NAME = process.env.DB_NAME as string;
 export const DB_PASSWORD = process.env.DB_PASSWORD as string;
 export const DB_PORT = Number(process.env.DB_PORT);
 export const ADMIN_API_KEY = process.env.ADMIN_API_KEY || "my-secret-password";
+
+export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+export const JWT_SECRET = process.env.JWT_SECRET || "super-secret-jwt-signature-key";

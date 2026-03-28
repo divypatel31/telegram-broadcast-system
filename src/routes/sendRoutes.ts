@@ -1,13 +1,23 @@
 import express from "express";
-import { sendFileController, getUserCount, getBroadcastHistory, cancelBroadcastController } from "../controllers/sendController"; // ✅ Import new controller
+import { 
+  sendFileController, 
+  getUserCount, 
+  getBroadcastHistory, 
+  cancelBroadcastController,
+  loginController 
+} from "../controllers/sendController"; 
 import { upload } from "../utils/upload"; 
-import { verifyApiKey } from "../middlewares/auth"; 
+import { verifyToken } from "../middlewares/auth"; // ✅ Import the new middleware
 
 const router = express.Router();
 
-router.post("/send-file", verifyApiKey, upload.single("file"), sendFileController);
-router.get("/users/count", verifyApiKey, getUserCount); 
-router.get("/history", verifyApiKey, getBroadcastHistory); 
-router.post("/cancel", verifyApiKey, cancelBroadcastController); // ✅ Add Cancel route
+// ✅ Open Login Route
+router.post("/login", loginController);
+
+// ✅ Protected Routes (Using verifyToken instead of verifyApiKey)
+router.post("/send-file", verifyToken, upload.single("file"), sendFileController);
+router.get("/users/count", verifyToken, getUserCount); 
+router.get("/history", verifyToken, getBroadcastHistory); 
+router.post("/cancel", verifyToken, cancelBroadcastController);
 
 export default router;

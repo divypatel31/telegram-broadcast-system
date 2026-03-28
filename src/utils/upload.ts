@@ -1,24 +1,34 @@
-import multer, { StorageEngine } from "multer";
-import { Request } from "express";
-import fs from "fs";
+import multer from "multer";
 import path from "path";
 
-// 1. Define the absolute path to the uploads directory
-const uploadDir = path.join(process.cwd(), "uploads");
-
-// 2. Automatically create the folder if it does not exist
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage: StorageEngine = multer.diskStorage({
-  destination: (req: Request, file, cb) => {
-    // 3. Tell multer to use the absolute path
-    cb(null, uploadDir); 
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
   },
-  filename: (req: Request, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
+  filename: (req, file, cb) => {
+    // Keep the original extension, but make the name unique to prevent overwriting
+    cb(null, Date.now() + "-" + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
   },
 });
 
-export const upload = multer({ storage });
+// ✅ NEW: Security Filter
+const fileFilter = (req: any, file: any, cb: any) => {
+  // 1. Block dangerous executable scripts
+  const dangerousExts = ['.exe', '.sh', '.bat', '.cmd', '.msi', '.js', '.vbs', '.php'];
+  const ext = path.extname(file.originalname).toLowerCase();
+  
+  if (dangerousExts.includes(ext)) {
+    return cb(new Error("Security Error: Executable files are not allowed."));
+  }
+  
+  // 2. Accept everything else
+  cb(null, true);
+};
+
+export const upload = multer({ 
+  storage,
+  limits: {
+    fileSize: 50 * 1024 * 1024, // ✅ NEW: 50 MB hard limit
+  },
+  fileFilter
+});
