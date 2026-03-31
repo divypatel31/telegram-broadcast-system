@@ -1,10 +1,9 @@
 import { Pool } from "pg";
-import { DB_USER, DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT } from "./env";
+import { DB_URL } from "./env"; // ✅ We only need DB_URL now
 
 export const db = new Pool({
-  user: DB_USER,
-  host: DB_HOST,
-  database: DB_NAME,
-  password: DB_PASSWORD,
-  port: DB_PORT,
+  connectionString: DB_URL,
+  ssl: {
+    rejectUnauthorized: false // ✅ This is REQUIRED to connect to Neon securely
+  }
 });
