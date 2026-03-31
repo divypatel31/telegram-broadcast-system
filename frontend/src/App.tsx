@@ -348,7 +348,7 @@ export default function App() {
       if (!token) return;
       setIsLoadingContacts(true);
       try {
-        const response = await fetch("http://localhost:5000/api/users/count", {
+        const response = await fetch("https://telegram-broadcast-system.onrender.com/api/users/count", {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (handleAuthError(response)) return;
@@ -369,7 +369,7 @@ export default function App() {
     if (!token) return;
     setIsLoadingHistory(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/history?page=${pageNum}&limit=10`, {
+      const response = await fetch(`https://telegram-broadcast-system.onrender.com/api/history?page=${pageNum}&limit=10`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (handleAuthError(response)) return;
@@ -400,7 +400,7 @@ export default function App() {
     if (!token || !activeBroadcastId.current) return;
     setIsAborting(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/cancel?broadcastId=${activeBroadcastId.current}`, {
+      const res = await fetch(`https://telegram-broadcast-system.onrender.com/api/cancel?broadcastId=${activeBroadcastId.current}`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -468,7 +468,7 @@ export default function App() {
     const tick = setInterval(() => { setProgress((p) => Math.min(p + Math.random() * 15, 85)); }, 300);
 
     try {
-      const res = await fetch(`http://localhost:5000/api/send-file?broadcastId=${currentBroadcastId}`, {
+      const res = await fetch(`https://telegram-broadcast-system.onrender.com/api/send-file?broadcastId=${currentBroadcastId}`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}` },
         body: formData,
