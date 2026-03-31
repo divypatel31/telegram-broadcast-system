@@ -315,7 +315,7 @@ export default function App() {
     e.preventDefault();
     setIsLoggingIn(true);
     try {
-      const res = await fetch("http://localhost:5000/api/login", {
+      const res = await fetch("https://telegram-broadcast-system.onrender.com/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password: loginPassword })
