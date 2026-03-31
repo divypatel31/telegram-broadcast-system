@@ -14,7 +14,7 @@ export const loginController = (req: Request, res: Response) => {
   
   if (password === ADMIN_PASSWORD) {
     // Generate a token that expires in 24 hours
-    const token = jwt.sign({ role: "admin" }, JWT_SECRET, { expiresIn: "24h" });
+    const token = jwt.sign({ role: "admin" }, JWT_SECRET as string, { expiresIn: "24h" });
     res.json({ token });
   } else {
     res.status(401).json({ error: "Invalid credentials" });

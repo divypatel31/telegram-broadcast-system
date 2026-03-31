@@ -12,8 +12,8 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction) => 
   const token = authHeader.split(" ")[1];
 
   try {
-    // ✅ Verify the token hasn't been tampered with and hasn't expired
-    jwt.verify(token, JWT_SECRET);
+    // ✅ FIX: Added "as string" to satisfy TypeScript
+    jwt.verify(token, JWT_SECRET as string);
     next();
   } catch (error) {
     return res.status(401).json({ error: "Unauthorized: Invalid or expired token" });
