@@ -8,6 +8,7 @@ import { db } from "./config/db";
 import { startCronJobs } from "./services/cronService";
 const app = express();
 
+app.set("trust proxy", 1);
 app.use(cors());
 app.use(express.json());
 
